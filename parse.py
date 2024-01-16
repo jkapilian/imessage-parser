@@ -33,7 +33,8 @@ left join handle as h2 on ch.handle_id = h2.rowid
 where
 -- try to eliminate duplicates due to non-unique message.cache_roomnames/chat.room_name
 (h2.service is null or m.service = h2.service) and
-(m.date >= ? and m.date <= ?)
+(m.date >= ? and m.date <= ?) and
+(h2.id LIKE ? or h.id LIKE ?)
 
 order by m.date asc;
 '''
@@ -48,7 +49,7 @@ def main(args):
 	for file in args.file:
 		connection = sqlite3.connect(file)
 		cursor = connection.cursor()
-		cursor.execute(QUERY, (convert_to_apple_date(args.start), convert_to_apple_date(args.end)))
+		cursor.execute(QUERY, (convert_to_apple_date(args.start), convert_to_apple_date(args.end), args.number, args.number))
 		for row in cursor.fetchall():
 			print(row)
 
@@ -58,6 +59,6 @@ if __name__ == "__main__":
 	parser.add_argument('-o', '--output', help="Output data file")
 	parser.add_argument('-s', '--start', help="Start Time", type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), required=True)
 	parser.add_argument('-e', '--end', help="End Time", type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'), required=True)
-	parser.add_argument('-n', '--number', nargs='+', default=[], help="Contacts for messages to filter by (omit flag to include all messages)")
+	parser.add_argument('-n', '--number', default="%", help="Contacts for messages to filter by (omit flag to include all messages)")
 	args = parser.parse_args()
 	main(args)
